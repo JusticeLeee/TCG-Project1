@@ -103,9 +103,15 @@ public:
 
 	virtual action take_action(const board& before) {
 		std::shuffle(opcode.begin(), opcode.end(), engine);
+		int max_reward = -1;
 		for (int op : opcode) {
 			board::reward reward = board(before).slide(op);
-			if (reward != -1) return action::slide(op);
+			max_reward = std::max(max_reward, reward);
+			// if (reward != -1) return action::slide(op);
+		}
+		for (int op : opcode) {
+			board::reward reward = board(before).slide(op);
+			 if (reward == max_reward) return action::slide(op);
 		}
 		return action();
 	}
