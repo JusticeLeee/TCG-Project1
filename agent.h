@@ -16,6 +16,7 @@
 #include <algorithm>
 #include "board.h"
 #include "action.h"
+// #include "episode.h"
 #include <fstream>
 
 class agent {
@@ -102,18 +103,25 @@ public:
 		opcode({ 0, 1, 2, 3 }) {}
 
 	virtual action take_action(const board& before) {
-		std::shuffle(opcode.begin(), opcode.end(), engine);
-		int max_reward = -1;
-		for (int op : opcode) {
-			board::reward reward = board(before).slide(op);
-			max_reward = std::max(max_reward, reward);
-			// if (reward != -1) return action::slide(op);
+		struct op{
+			int code;
+			board after;
+			int value;
+			op(const board& before, int code) : code(code), after(before), value(after.slide(code)) {}
+			bool operator <(const op& o) const { return value < o.value; }
+		}op[]= {{before,0}, {before,1}, {before,2}, {before,3}};
+
+		for(int i :{0,1,2,3}){
+			if(op[i].value == -1) continue;
+			int max_loc = 0; // check the position
+			for(int t = 0; t < 16 ; t++)
+				if(op[i].after(t) > op[i].after(max_loc))
+					max_loc = t;
+			if(max_loc == 0 || max_loc == 3 || max_loc == 12 || max_loc ==15)
+				op[i].value += op[i].after(max_loc);
 		}
-		for (int op : opcode) {
-			board::reward reward = board(before).slide(op);
-			 if (reward == max_reward) return action::slide(op);
-		}
-		return action();
+		std::sort(op,op+4);
+		return action::slide(op[3].code);
 	}
 
 private:
